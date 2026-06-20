@@ -29,7 +29,7 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Map<String, String> handleOther(Throwable e) {
-        log.error("Неожиданная ошибка: {}", e.getMessage());
+        log.error("Неожиданная ошибка: {}", e.getMessage(), e);
         return Map.of("error", e.getMessage());
     }
 }
