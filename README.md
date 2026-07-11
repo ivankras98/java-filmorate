@@ -1,106 +1,58 @@
-# \# Filmorate
+# Filmorate
 
-# 
+Сервис для оценки фильмов и подбора рекомендаций.
 
-# Сервис для оценки фильмов и подбора рекомендаций.
+## Схема базы данных
 
-# 
+![ER-диаграмма](docs/er-diagram.png)
 
-# \## Схема базы данных
+## Описание таблиц
 
-# 
+- **users** — пользователи приложения
+- **films** — фильмы
+- **mpa_ratings** — справочник рейтингов MPA
+- **genres** — справочник жанров
+- **film_genres** — связь фильм-жанр
+- **film_likes** — лайки
+- **friendships** — дружба со статусом
 
-# !\[ER-диаграмма](docs/er-diagram.png)
+## Пояснение к схеме
 
-# 
+База данных соответствует **3NF** и поддерживает всю бизнес-логику приложения.
 
-# \## Описание таблиц
+### Примеры SQL-запросов
 
-# 
+**Топ-10 популярных фильмов по количеству лайков**
+```sql
+SELECT f.id, f.name, COUNT(fl.user_id) AS likes_count
+FROM films f
+LEFT JOIN film_likes fl ON f.id = fl.film_id
+GROUP BY f.id, f.name
+ORDER BY likes_count DESC
+LIMIT 10;
+```
 
-# \- \*\*users\*\* — пользователи приложения
+**Список подтверждённых друзей пользователя**
+```sql
+SELECT u.*
+FROM users u
+JOIN friendships fr ON u.id = fr.friend_id
+WHERE fr.user_id = 1 AND fr.status = 'CONFIRMED';
+```
 
-# \- \*\*films\*\* — фильмы с описанием и рейтингом MPA
+**Общие друзья двух пользователей**
+```sql
+SELECT u.*
+FROM users u
+JOIN friendships fr1 ON u.id = fr1.friend_id AND fr1.user_id = 1
+JOIN friendships fr2 ON u.id = fr2.friend_id AND fr2.user_id = 2
+WHERE fr1.status = 'CONFIRMED' AND fr2.status = 'CONFIRMED';
+```
 
-# \- \*\*mpa\_ratings\*\* — справочник рейтингов MPA (G, PG, PG-13, R, NC-17)
-
-# \- \*\*genres\*\* — справочник жанров (Комедия, Драма и т.д.)
-
-# \- \*\*film\_genres\*\* — связь фильмов и жанров (многие-ко-многим)
-
-# \- \*\*film\_likes\*\* — лайки пользователей фильмам
-
-# \- \*\*friendships\*\* — дружба между пользователями со статусом (CONFIRMED/UNCONFIRMED)
-
-# 
-
-# \## Примеры SQL-запросов
-
-# 
-
-# \### Получить все фильмы
-
-# SELECT f.\*, m.name AS mpa\_rating
-
-# FROM films f
-
-# JOIN mpa\_ratings m ON f.mpa\_rating\_id = m.id;
-
-# 
-
-# \### Получить топ-10 популярных фильмов по лайкам
-
-# SELECT f.\*, COUNT(fl.user\_id) AS likes\_count
-
-# FROM films f
-
-# LEFT JOIN film\_likes fl ON f.id = fl.film\_id
-
-# GROUP BY f.id
-
-# ORDER BY likes\_count DESC
-
-# LIMIT 10;
-
-# 
-
-# \### Получить список друзей пользователя
-
-# SELECT u.\*
-
-# FROM users u
-
-# JOIN friendships fr ON u.id = fr.friend\_id
-
-# WHERE fr.user\_id = 1
-
-# AND fr.status = 'CONFIRMED';
-
-# 
-
-# \### Получить общих друзей двух пользователей
-
-# SELECT u.\*
-
-# FROM users u
-
-# JOIN friendships fr1 ON u.id = fr1.friend\_id AND fr1.user\_id = 1
-
-# JOIN friendships fr2 ON u.id = fr2.friend\_id AND fr2.user\_id = 2
-
-# WHERE fr1.status = 'CONFIRMED'
-
-# AND fr2.status = 'CONFIRMED';
-
-# 
-
-# \### Получить все жанры фильма
-
-# SELECT g.name
-
-# FROM genres g
-
-# JOIN film\_genres fg ON g.id = fg.genre\_id
-
-# WHERE fg.film\_id = 1;
-
+**Жанры конкретного фильма**
+```sql
+SELECT g.name
+FROM genres g
+         JOIN film_genres fg ON g.id = fg.genre_id
+WHERE fg.film_id = 1;
+```
