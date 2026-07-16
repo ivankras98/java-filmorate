@@ -16,11 +16,10 @@ public class User {
     private String name;
     private LocalDate birthday;
 
-    // Друзья (для удобства работы в памяти)
+    // Хранит id друзей для текущей реализации в памяти.
+    // При переходе на БД будет заменено на работу с таблицей friendships,
+    // которая поддерживает статусы CONFIRMED/UNCONFIRMED.
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
     private Set<Integer> friends = new HashSet<>();
-
-    // Можно добавить (по желанию), чтобы хранить статусы:
-    // private Set<Friendship> friendships = new HashSet<>();
 }

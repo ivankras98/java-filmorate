@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS film_likes (
 CREATE TABLE IF NOT EXISTS friendships (
                                            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     friend_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    status VARCHAR(20) NOT NULL,   -- CONFIRMED / UNCONFIRMED
+    status VARCHAR(20) NOT NULL CHECK (status IN ('CONFIRMED', 'UNCONFIRMED')),
     PRIMARY KEY (user_id, friend_id)
     );
 

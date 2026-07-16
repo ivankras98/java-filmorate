@@ -1,58 +1,60 @@
-# Filmorate
+## Примеры SQL-запросов
 
-Сервис для оценки фильмов и подбора рекомендаций.
+### Получить все фильмы с рейтингом MPA
+SELECT f.*, m.name AS mpa_rating
+FROM films f
+JOIN mpa_ratings m ON f.mpa_rating_id = m.id;
 
-## Схема базы данных
+### Получить фильм с рейтингом MPA и жанрами
+SELECT f.*, m.name AS mpa_rating, g.name AS genre
+FROM films f
+JOIN mpa_ratings m ON f.mpa_rating_id = m.id
+LEFT JOIN film_genres fg ON f.id = fg.film_id
+LEFT JOIN genres g ON fg.genre_id = g.id
+WHERE f.id = 1;
 
-![ER-диаграмма](docs/er-diagram.png)
+### Получить всех пользователей
+SELECT * FROM users;
 
-## Описание таблиц
-
-- **users** — пользователи приложения
-- **films** — фильмы
-- **mpa_ratings** — справочник рейтингов MPA
-- **genres** — справочник жанров
-- **film_genres** — связь фильм-жанр
-- **film_likes** — лайки
-- **friendships** — дружба со статусом
-
-## Пояснение к схеме
-
-База данных соответствует **3NF** и поддерживает всю бизнес-логику приложения.
-
-### Примеры SQL-запросов
-
-**Топ-10 популярных фильмов по количеству лайков**
-```sql
-SELECT f.id, f.name, COUNT(fl.user_id) AS likes_count
+### Получить топ-10 популярных фильмов по лайкам
+SELECT f.*, COUNT(fl.user_id) AS likes_count
 FROM films f
 LEFT JOIN film_likes fl ON f.id = fl.film_id
-GROUP BY f.id, f.name
+GROUP BY f.id
 ORDER BY likes_count DESC
 LIMIT 10;
-```
 
-**Список подтверждённых друзей пользователя**
-```sql
+### Поставить лайк фильму
+INSERT INTO film_likes (film_id, user_id) VALUES (1, 2);
+
+### Удалить лайк
+DELETE FROM film_likes WHERE film_id = 1 AND user_id = 2;
+
+### Добавить в друзья (неподтверждённая дружба)
+INSERT INTO friendships (user_id, friend_id, status)
+VALUES (1, 2, 'UNCONFIRMED');
+
+### Подтвердить дружбу
+UPDATE friendships SET status = 'CONFIRMED'
+WHERE user_id = 2 AND friend_id = 1;
+
+### Получить список друзей пользователя
 SELECT u.*
 FROM users u
 JOIN friendships fr ON u.id = fr.friend_id
-WHERE fr.user_id = 1 AND fr.status = 'CONFIRMED';
-```
+WHERE fr.user_id = 1
+AND fr.status = 'CONFIRMED';
 
-**Общие друзья двух пользователей**
-```sql
+### Получить общих друзей двух пользователей
 SELECT u.*
 FROM users u
 JOIN friendships fr1 ON u.id = fr1.friend_id AND fr1.user_id = 1
 JOIN friendships fr2 ON u.id = fr2.friend_id AND fr2.user_id = 2
-WHERE fr1.status = 'CONFIRMED' AND fr2.status = 'CONFIRMED';
-```
+WHERE fr1.status = 'CONFIRMED'
+AND fr2.status = 'CONFIRMED';
 
-**Жанры конкретного фильма**
-```sql
+### Получить все жанры фильма
 SELECT g.name
 FROM genres g
-         JOIN film_genres fg ON g.id = fg.genre_id
+JOIN film_genres fg ON g.id = fg.genre_id
 WHERE fg.film_id = 1;
-```
