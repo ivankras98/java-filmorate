@@ -1,3 +1,21 @@
+# Filmorate
+
+Сервис для оценки фильмов и подбора рекомендаций.
+
+## Схема базы данных
+
+![ER-диаграмма](docs/er-diagram.png)
+
+## Описание таблиц
+
+- users — пользователи приложения
+- films — фильмы с описанием и рейтингом MPA
+- mpa_ratings — справочник рейтингов MPA (G, PG, PG-13, R, NC-17)
+- genres — справочник жанров (Комедия, Драма, Мультфильм, Триллер, Документальный, Боевик)
+- film_genres — связь фильмов и жанров (многие-ко-многим), составной PK (film_id, genre_id)
+- film_likes — лайки пользователей фильмам, составной PK (film_id, user_id)
+- friendships — дружба между пользователями, составной PK (user_id, friend_id), статус: CONFIRMED/UNCONFIRMED
+
 ## Примеры SQL-запросов
 
 ### Получить все фильмы с рейтингом MPA
@@ -34,9 +52,13 @@ DELETE FROM film_likes WHERE film_id = 1 AND user_id = 2;
 INSERT INTO friendships (user_id, friend_id, status)
 VALUES (1, 2, 'UNCONFIRMED');
 
-### Подтвердить дружбу
+### Подтвердить дружбу (обновляем исходную заявку)
 UPDATE friendships SET status = 'CONFIRMED'
-WHERE user_id = 2 AND friend_id = 1;
+WHERE user_id = 1 AND friend_id = 2;
+
+### Удалить из друзей
+DELETE FROM friendships
+WHERE user_id = 1 AND friend_id = 2;
 
 ### Получить список друзей пользователя
 SELECT u.*
