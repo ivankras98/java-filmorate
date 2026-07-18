@@ -12,9 +12,10 @@ import ru.yandex.practicum.filmorate.model.User;
 
 import java.sql.*;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.HashSet;
+
 @Slf4j
 @Primary
 @Repository
