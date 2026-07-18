@@ -25,6 +25,7 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film add(Film film) {
+        // Проверяем MPA одним запросом
         List<Integer> mpaCheck = jdbc.query(
                 "SELECT id FROM mpa_ratings WHERE id = ?",
                 (rs, rn) -> rs.getInt("id"), film.getMpa().getId());
@@ -32,14 +33,18 @@ public class FilmDbStorage implements FilmStorage {
             throw new NotFoundException("Рейтинг MPA с id " + film.getMpa().getId() + " не найден");
         }
 
-        if (film.getGenres() != null) {
-            for (Genre genre : film.getGenres()) {
-                List<Integer> genreCheck = jdbc.query(
-                        "SELECT id FROM genres WHERE id = ?",
-                        (rs, rn) -> rs.getInt("id"), genre.getId());
-                if (genreCheck.isEmpty()) {
-                    throw new NotFoundException("Жанр с id " + genre.getId() + " не найден");
-                }
+        // Проверяем все жанры одним запросом
+        if (film.getGenres() != null && !film.getGenres().isEmpty()) {
+            List<Integer> genreIds = film.getGenres().stream()
+                    .map(Genre::getId)
+                    .toList();
+            String inClause = String.join(",", Collections.nCopies(genreIds.size(), "?"));
+            List<Integer> foundIds = jdbc.query(
+                    "SELECT id FROM genres WHERE id IN (" + inClause + ")",
+                    (rs, rn) -> rs.getInt("id"),
+                    genreIds.toArray());
+            if (foundIds.size() != genreIds.size()) {
+                throw new NotFoundException("Один или несколько жанров не найдены");
             }
         }
 
@@ -125,10 +130,15 @@ public class FilmDbStorage implements FilmStorage {
 
     private void saveGenres(Film film) {
         if (film.getGenres() == null || film.getGenres().isEmpty()) return;
-        for (Genre genre : film.getGenres()) {
-            jdbc.update("INSERT INTO film_genres (film_id, genre_id) VALUES (?, ?)",
-                    film.getId(), genre.getId());
-        }
+        List<Genre> genres = new ArrayList<>(film.getGenres());
+        jdbc.batchUpdate(
+                "INSERT INTO film_genres (film_id, genre_id) VALUES (?, ?)",
+                genres,
+                genres.size(),
+                (ps, genre) -> {
+                    ps.setInt(1, film.getId());
+                    ps.setInt(2, genre.getId());
+                });
     }
 
     private void loadGenresForFilms(List<Film> films) {
