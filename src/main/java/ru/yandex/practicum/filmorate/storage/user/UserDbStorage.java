@@ -20,6 +20,7 @@ import java.util.Optional;
 @Primary
 @Repository
 @RequiredArgsConstructor
+
 public class UserDbStorage implements UserStorage {
 
     private final JdbcTemplate jdbc;
