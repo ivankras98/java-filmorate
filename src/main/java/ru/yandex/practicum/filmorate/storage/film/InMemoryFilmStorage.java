@@ -5,9 +5,8 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -17,7 +16,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     private int nextId = 1;
 
     @Override
-    public Film addFilm(Film film) {
+    public Film add(Film film) {
         film.setId(nextId++);
         films.put(film.getId(), film);
         log.info("Добавлен фильм: {}", film);
@@ -25,10 +24,9 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Film updateFilm(Film film) {
-        if (!containsFilm(film.getId())) {
-            log.warn("Фильм с id={} не найден", film.getId());
-            throw new NotFoundException("Фильм с таким id не найден");
+    public Film update(Film film) {
+        if (!films.containsKey(film.getId())) {
+            throw new NotFoundException("Фильм с id " + film.getId() + " не найден");
         }
         films.put(film.getId(), film);
         log.info("Обновлён фильм: {}", film);
@@ -36,22 +34,34 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Collection<Film> getAllFilms() {
+    public Collection<Film> findAll() {
         return films.values();
     }
 
     @Override
-    public Film getFilmById(Integer id) {
-        Film film = films.get(id);
-        if (film == null) {
-            log.warn("Фильм с id={} не найден", id);
-            throw new NotFoundException("Фильм с id " + id + " не найден");
-        }
-        return film;
+    public Optional<Film> findById(int id) {
+        return Optional.ofNullable(films.get(id));
     }
 
     @Override
-    public boolean containsFilm(Integer id) {
-        return id != null && films.containsKey(id);
+    public void addLike(int filmId, int userId) {
+        Film film = films.get(filmId);
+        if (film == null) throw new NotFoundException("Фильм с id " + filmId + " не найден");
+        film.getLikes().add(userId);
+    }
+
+    @Override
+    public void removeLike(int filmId, int userId) {
+        Film film = films.get(filmId);
+        if (film == null) throw new NotFoundException("Фильм с id " + filmId + " не найден");
+        film.getLikes().remove(userId);
+    }
+
+    @Override
+    public List<Film> getPopular(int count) {
+        return films.values().stream()
+                .sorted(Comparator.comparingInt((Film f) -> f.getLikes().size()).reversed())
+                .limit(count)
+                .collect(Collectors.toList());
     }
 }
