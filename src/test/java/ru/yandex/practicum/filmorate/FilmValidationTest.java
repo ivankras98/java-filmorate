@@ -3,28 +3,43 @@ package ru.yandex.practicum.filmorate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import ru.yandex.practicum.filmorate.controller.FilmController;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
-import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
+
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 
+@ExtendWith(MockitoExtension.class)
 class FilmValidationTest {
+
+    @Mock
+    private FilmStorage filmStorage;
+
+    @Mock
+    private UserStorage userStorage;
 
     private FilmController controller;
 
     @BeforeEach
     void setUp() {
-        FilmStorage filmStorage = new InMemoryFilmStorage();
-        UserStorage userStorage = new InMemoryUserStorage();
         FilmService filmService = new FilmService(filmStorage, userStorage);
         controller = new FilmController(filmService);
+        lenient().when(filmStorage.add(any())).thenAnswer(inv -> {
+            Film f = inv.getArgument(0);
+            f.setId(1);
+            return f;
+        });
     }
 
     @Test
@@ -87,11 +102,15 @@ class FilmValidationTest {
     }
 
     private Film makeFilm(String name, String description, LocalDate releaseDate, int duration) {
+        Mpa mpa = new Mpa();
+        mpa.setId(1);
+        mpa.setName("G");
         Film film = new Film();
         film.setName(name);
         film.setDescription(description);
         film.setReleaseDate(releaseDate);
         film.setDuration(duration);
+        film.setMpa(mpa);
         return film;
     }
 }
