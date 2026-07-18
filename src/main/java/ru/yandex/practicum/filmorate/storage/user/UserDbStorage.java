@@ -20,7 +20,6 @@ import java.util.Optional;
 @Primary
 @Repository
 @RequiredArgsConstructor
-
 public class UserDbStorage implements UserStorage {
 
     private final JdbcTemplate jdbc;
@@ -68,7 +67,8 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public void addFriend(int userId, int friendId) {
-        // Дружба односторонняя — просто добавляем запись
+        getUserById(userId);
+        getUserById(friendId);
         String sql = "INSERT INTO friendships (user_id, friend_id, status) VALUES (?, ?, 'UNCONFIRMED')";
         jdbc.update(sql, userId, friendId);
         log.info("Пользователь {} добавил в друзья {}", userId, friendId);
@@ -76,12 +76,15 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public void removeFriend(int userId, int friendId) {
+        getUserById(userId);
+        getUserById(friendId);
         jdbc.update("DELETE FROM friendships WHERE user_id = ? AND friend_id = ?", userId, friendId);
         log.info("Пользователь {} удалил из друзей {}", userId, friendId);
     }
 
     @Override
     public List<User> getFriends(int userId) {
+        getUserById(userId);
         String sql = """
                 SELECT u.* FROM users u
                 JOIN friendships f ON u.id = f.friend_id
@@ -98,6 +101,11 @@ public class UserDbStorage implements UserStorage {
                 JOIN friendships f2 ON u.id = f2.friend_id AND f2.user_id = ?
                 """;
         return jdbc.query(sql, this::mapRowToUser, userId, otherId);
+    }
+
+    private User getUserById(int id) {
+        return findById(id)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id " + id + " не найден"));
     }
 
     private User mapRowToUser(ResultSet rs, int rowNum) throws SQLException {

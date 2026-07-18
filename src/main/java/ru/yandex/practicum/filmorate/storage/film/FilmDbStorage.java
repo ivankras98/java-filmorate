@@ -25,6 +25,24 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film add(Film film) {
+        List<Integer> mpaCheck = jdbc.query(
+                "SELECT id FROM mpa_ratings WHERE id = ?",
+                (rs, rn) -> rs.getInt("id"), film.getMpa().getId());
+        if (mpaCheck.isEmpty()) {
+            throw new NotFoundException("Рейтинг MPA с id " + film.getMpa().getId() + " не найден");
+        }
+
+        if (film.getGenres() != null) {
+            for (Genre genre : film.getGenres()) {
+                List<Integer> genreCheck = jdbc.query(
+                        "SELECT id FROM genres WHERE id = ?",
+                        (rs, rn) -> rs.getInt("id"), genre.getId());
+                if (genreCheck.isEmpty()) {
+                    throw new NotFoundException("Жанр с id " + genre.getId() + " не найден");
+                }
+            }
+        }
+
         String sql = "INSERT INTO films (name, description, release_date, duration, mpa_rating_id) VALUES (?,?,?,?,?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbc.update(con -> {
